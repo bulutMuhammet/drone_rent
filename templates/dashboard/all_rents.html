@@ -1,0 +1,201 @@
+{% extends "dashboard/layout.html" %}
+{% block which_page %}
+       <div class="col-11 ps-3 links">
+        <a  href="{% url "index" %}">
+            <i class="fa fa-table me-2"></i>
+            Kiraladıklarım
+        </a>
+        <a href="{% url "new-drone-rent" %}">
+            <i class="fa fa-plus-square me-2"></i>
+            Yeni İHA Kirala
+        </a>
+        <a class="active" href="{% url "all-rents" %}">
+            <i class="fa fa-plus-square me-2"></i>
+            Tüm Kiralama Kayıtları
+        </a>
+        <hr>
+        <a href="{% url "logout" %}" class="btn btn-danger col-12 mt-2">Çıkış Yap</a>
+
+        <a class="text-white text-center">
+
+            {{ request.user.get_full_name }} <span class="text-muted">olarak giriş yaptın.</span>
+            <br>
+        </a>
+
+    </div>
+
+{% endblock %}
+{% block content %}
+    <div class="dash-content ">
+        <div class="row justify-content-center">
+            {% if messages %}
+                {% for message in messages %}
+                            <div class="alert alert-success">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            <div class="col-9 tabler pb-5">
+                <h4 class="text-dark mt-5 mb-5 fw-bold">Tüm Kiralama Kayıtları</h4>
+                <table id="rented-drones-table" class="display text-dark mb-3">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Kiralayan Kullanıcı Adı</th>
+                        <th>Kiralayan Kullanıcı Soyadı</th>
+                        <th>İHA Marka</th>
+                        <th>İHA Model</th>
+                        <th>İHA Ağırlık (kg)</th>
+                        <th>İHA Kategori</th>
+                        <th>Kira Başlangıç</th>
+                        <th>Kira Bitiş</th>
+                        <th>Güncelle</th>
+                        <th>Sil</th>
+
+                    </tr>
+                    </thead>
+                </table>
+
+
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block script %}
+    <script>
+
+
+        $(document).ready(function () {
+
+            $('#rented-drones-table').DataTable({
+
+                serverSide: true,
+                processing: true,
+                columnDefs: [
+                    {
+                        "targets": [-2, -1], // Son iki sütuna hedef belirleyin (Güncelle, Sil sütunları)
+                        "orderable": false, // Sıralama özelliğini kapalı yapın
+                        "searchable": false // Arama özelliğini kapalı yapın
+                    }
+                ],
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.5/i18n/tr.json',
+                },
+                ajax: {
+                    url: '/drones/all-rented-drones',
+                    type: 'GET',
+                    dataSrc: 'results',
+                    data: function (params) {
+                        var columnNames = [
+                            'id',
+                            'renting_user__first_name',
+                            'renting_user__last_name',
+                            'drone__brand',
+                            'drone__model',
+                            'drone__weight',
+                            'drone__category',
+                            'start_date',
+                            'end_date'
+                        ];
+                        var orderingColumn = columnNames[params.order[0].column];
+                        var orderingDirection = params.order[0].dir === 'asc' ? '' : '-';
+
+
+                        return {
+                            search: params.search.value,
+                            ordering: orderingDirection + orderingColumn,
+                            ordering_direction: params.order[0].dir,
+                            page: Math.floor(params.start / params.length) + 1,  // Start parametresini 10'a böl
+                            page_size: params.length
+
+                        };
+                    },
+
+                },
+                columns: [
+                    {data: 'id'},
+                    {data: 'user'},
+                    {data: 'user_last_name'},
+                    {data: 'brand'},
+                    {data: 'model'},
+                    {data: 'weight'},
+                    {data: 'category'},
+                    {
+                        data: 'start_date',
+                        render: function (data, type, row) {
+                            var startDate = new Date(data);
+                            return startDate.toLocaleDateString();
+                        }
+                    },
+                    {
+                        data: 'end_date',
+                        render: function (data, type, row) {
+                            var endDate = new Date(data);
+                            return endDate.toLocaleDateString();
+                        }
+                    },
+                    {
+                        "data": null,
+                        "render": function (data, type, row) {
+                            return "<button class='edit-btn btn btn-info text-white'>Güncelle</button>";
+                        }
+                    },
+                    {
+                        "data": null,
+                        "render": function (data, type, row) {
+                            return "<button class='delete-btn btn btn-danger'>Sil</button>";
+                        }
+                    }
+                ],
+                lengthMenu: [10, 25, 50, 75, 100],
+                pageLength: 10,
+
+            });
+        });
+
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        $('#rented-drones-table').on('click', '.delete-btn', function () {
+            var table = $('#rented-drones-table').DataTable();
+            var row = $(this).closest('tr');
+            var id = row[0].children[0].innerHTML
+
+            var confirmation = confirm("Bu satırı silmek istediğinizden emin misiniz?");
+            if (confirmation) {
+                var csrftoken = getCookie('csrftoken');
+                $.ajax({
+                    url: "drones/" + id,
+                    type: "DELETE",
+                    headers: {"X-CSRFToken": csrftoken}, // CSRF token'ı başlıkta gönderin
+
+                    success: function (response) {
+                        table.row(row).remove().draw();
+
+                    },
+                    error: function (xhr, status, error) {
+                        console.log(error);
+                    }
+                });
+            }
+        });
+         $('#rented-drones-table').on('click', '.edit-btn', function () {
+            var row = $(this).closest('tr');
+            var id = row[0].children[0].innerHTML
+            window.location.href = "update-drone/" + id
+
+
+
+        });
+    </script>
+{% endblock %}

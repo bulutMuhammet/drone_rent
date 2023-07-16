@@ -1,0 +1,84 @@
+{% extends "dashboard/layout.html" %}
+{% block which_page %}
+    <div class="col-11 ps-3 links">
+        <a class="active" href="#">
+            <i class="fa fa-table me-2"></i>
+            Kiraladıklarım
+        </a>
+        <a href="#">
+            <i class="fa fa-plus-square me-2"></i>
+            Yeni İHA
+        </a>
+        <a href="#">
+            <i class="fa fa-user me-2"></i>
+            Hesabım
+        </a>
+
+    </div>
+
+{% endblock %}
+{% block content %}
+    <div class="dash-content ">
+        <div class="row justify-content-center">
+            <div class="col-9 tabler">
+                <h4 class="text-dark mt-5 mb-5 fw-bold">Kiralanan İhalar</h4>
+                <table id="rented-drones-table" class="display text-dark">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>İHA Marka</th>
+                        <th>İHA Model</th>
+                        <th>İHA Ağırlık (kg)</th>
+                        <th>İHA Kategori</th>
+                        <th>Kira Başlangıç</th>
+                        <th>Kira Bitiş</th>
+                    </tr>
+                    </thead>
+                </table>
+
+
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block script %}
+    <script>
+
+
+        $(document).ready(function () {
+            $('#rented-drones-table').DataTable({
+
+                ajax: {
+                    url: '/drones/my-rented-drones', // API endpoint URL'sini buraya girin
+                    type: 'GET',
+                    dataSrc: '', // API'den dönen verilerin yer aldığı liste adını belirtin
+
+                },
+                columns: [
+                    {data: 'id'},
+                    {data: 'brand'},
+                    {data: 'model'},
+                    {data: 'weight'},
+                    {data: 'category'},
+                    {
+                        data: 'start_date',
+                        render: function (data, type, row) {
+                            var startDate = new Date(data);
+                            return startDate.toLocaleDateString();
+                        }
+                    },
+                    {
+                        data: 'end_date',
+                        render: function (data, type, row) {
+                            var endDate = new Date(data);
+                            return endDate.toLocaleDateString();
+                        }
+                    },
+                ],
+
+
+            });
+        });
+
+    </script>
+{% endblock %}

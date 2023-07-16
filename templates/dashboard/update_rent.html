@@ -1,0 +1,75 @@
+{% extends "dashboard/layout.html" %}
+{% block which_page %}
+      <div class="col-11 ps-3 links">
+        <a class="active"  href="{% url "index" %}">
+            <i class="fa fa-table me-2"></i>
+            Kiraladıklarım
+        </a>
+        <a  href="{% url "new-drone-rent" %}">
+            <i class="fa fa-plus-square me-2"></i>
+            Yeni İHA Kirala
+        </a>
+         {% if request.user.is_superuser %}
+        <a href="{% url "all-rents" %}">
+            <i class="fa fa-plus-square me-2"></i>
+            Tüm Kiralama Kayıtları
+        </a>
+        {% endif %}
+        <hr>
+        <a href="{% url "logout" %}" class="btn btn-danger col-12 mt-2">Çıkış Yap</a>
+
+        <a class="text-white text-center">
+
+            {{ request.user.get_full_name }} <span class="text-muted">olarak giriş yaptın.</span>
+            <br>
+        </a>
+
+    </div>
+
+{% endblock %}
+{% block content %}
+    <div class="dash-content ">
+        <div class="row justify-content-center">
+            <div class="col-9 tabler pb-5">
+                <h4 class="text-dark mt-5 mb-5 fw-bold">Kiralama Kaydını Düzenle</h4>
+                {% if messages %}
+                <div class="alert alert-danger">
+                    {% if messages %}
+                        {% for message in messages %}
+                            {{ message }}
+                        {% endfor %}
+
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <label for="id_drone" class="form-label">Drone</label>
+                    <select name="drone" required id="id_drone" class="form-select  mb-3"
+                            aria-label=".form-select-lg example">
+                        <option value="">Kiralamak İstediğin Drone'u seç</option>
+                        {% for drone in drones %}
+                            <option value="{{ drone.id }}" {% if drone.id == renteddrone.drone.id %}selected{% endif %}>Marka: {{ drone.brand }} -
+                                Model {{ drone.model }} - Kategori: {{ drone.category }}
+                                - Ağırlık {{ drone.weight }}</option>
+                        {% endfor %}
+
+
+                    </select>
+
+                    <label for="start_date">Kira Başlangıç</label>
+                    <input type="datetime-local" value="{{ renteddrone.start_date|date:'Y-m-d\TH:i' }}" required name="start_date" id="start_date" class="form-control">
+
+                    <label for="start_date" class="mt-3">Kira Bitiş</label>
+                    <input type="datetime-local" required id="end_date" value="{{ renteddrone.end_date|date:'Y-m-d\TH:i' }}" name="end_date" class="form-control">
+
+                    <button class="btn btn-success col-12 mt-4 mb-5">Kirala</button>
+                </form>
+                {#                {{ drones }}#}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block script %}
+{% endblock %}
